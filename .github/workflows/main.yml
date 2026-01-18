@@ -1,27 +1,31 @@
-name: Mida_Pro_64bit
-on: [push]
+name: MidaBuild
+on: [push, workflow_dispatch] # أضفت خاصية التشغيل اليدوي أيضاً
 
 jobs:
-  build:
+  mida_job:
     runs-on: windows-latest
     steps:
-      - name: Checkout
+      - name: Fix Git Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # هذا السطر يضمن سحب كل الملفات بعمق كامل لحل خطأ 128
 
-      - name: Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
-      - name: Libs
-        run: pip install flask flask-socketio pyautogui opencv-python numpy pyinstaller
+      - name: Install Libs
+        run: |
+          python -m pip install --upgrade pip
+          pip install flask flask-socketio pyautogui opencv-python numpy pyinstaller
 
-      - name: Build
-        run: pyinstaller --onefile --windowed --name "Mida_Interactive_Pro_x64" main.py
+      - name: Build EXE
+        run: pyinstaller --onefile --windowed --name "Mida_Pro_x64" main.py
 
-      - name: Save
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: Mida_EXE_Final
+          name: Mida_Product
           path: dist/*.exe
           
