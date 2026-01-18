@@ -6,19 +6,17 @@ import winreg as reg
 from flask import Flask, request, jsonify
 from flask_socketio import SocketIO
 
-# --- إعدادات النظام الثابتة ---
+# --- إعدادات الحماية ---
 SYSTEM_NAME = "Mida Interactive Pro"
-PERMANENT_SERIAL = "MIDA-2026-PRO-99" # السيريال الخاص بك
+PERMANENT_SERIAL = "MIDA-2026-PRO-99"
 TRIAL_DAYS = 15
 
-# --- قسم الحماية والريجستري ---
 def check_license_status():
     key_path = r"Software\MidaInteractive"
     try:
         key = reg.OpenKey(reg.HKEY_CURRENT_USER, key_path, 0, reg.KEY_ALL_ACCESS)
         status, _ = reg.QueryValueEx(key, "Status")
         if status == "Active": return "Active"
-        
         first_run, _ = reg.QueryValueEx(key, "FirstRun")
         elapsed = (time.time() - float(first_run)) / (24 * 3600)
         if elapsed > TRIAL_DAYS: return "Expired"
@@ -34,7 +32,37 @@ def activate_system(serial_input, root):
     if serial_input == PERMANENT_SERIAL:
         key = reg.OpenKey(reg.HKEY_CURRENT_USER, r"Software\MidaInteractive", 0, reg.KEY_ALL_ACCESS)
         reg.SetValueEx(key, "Status", 0, reg.REG_SZ, "Active")
-        messagebox.showinfo("نجاح", "تم تفعيل نظام ميدا بنجاح! سيفتح البرنامج الآن.")
+        messagebox.showinfo("نجاح", "تم التفعيل بنجاح!")
+        root.destroy()
+    else:
+        messagebox.showerror("خطأ", "السيريال غير صحيح")
+
+class SetupInterface:
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.title("Mida Setup")
+        self.root.geometry("400x250")
+        tk.Label(self.root, text="MIDA INTERACTIVE PRO", font=("Arial", 14, "bold")).pack(pady=20)
+        self.entry = tk.Entry(self.root, font=("Arial", 12))
+        self.entry.pack(pady=10)
+        tk.Button(self.root, text="Activate", command=lambda: activate_system(self.entry.get(), self.root)).pack(pady=10)
+        self.root.mainloop()
+
+app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+def screen_capture():
+    while True:
+        img = pyautogui.screenshot()
+        frame = np.array(img)
+        frame = cv2.resize(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), (640, 360))
+        _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 40])
+        encoded = base64.b64encode(buffer).decode('utf-8')
+        socketio.emit('screen_frame', {'image': encoded})
+        socketio.sleep(0.1)
+
+if
+messagebox.showinfo("نجاح", "تم تفعيل نظام ميدا بنجاح! سيفتح البرنامج الآن.")
         root.destroy()
     else:
         messagebox.showerror("خطأ", "السيريال نمبر غير صحيح!")
