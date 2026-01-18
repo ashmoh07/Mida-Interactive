@@ -1,0 +1,22 @@
+name: MidaBuild
+on: [push]
+jobs:
+  mida_job:
+    runs-on: windows-latest
+    steps:
+      - name: step1_check
+        uses: actions/checkout@v4
+      - name: step2_python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: step3_libs
+        run: pip install flask flask-socketio pyautogui opencv-python numpy pyinstaller
+      - name: step4_build
+        run: pyinstaller --onefile --windowed --name "Mida_Pro_x64" main.py
+      - name: step5_save
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mida_Product
+          path: dist/*.exe
+          
