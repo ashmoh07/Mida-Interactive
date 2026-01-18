@@ -1,0 +1,26 @@
+name: Build Mida Full Suite
+on: [push]
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        # بناء نسختين في نفس الوقت
+        arch: [x64, x86]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+          architecture: ${{ matrix.arch }}
+      - name: Install Libs
+        run: pip install flask flask-socketio pyautogui opencv-python numpy pyinstaller
+      - name: Build EXE
+        run: pyinstaller --onefile --windowed --name "Mida_Interactive_${{ matrix.arch }}" main.py
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mida_Build_${{ matrix.arch }}
+          path: dist/*.exe
+          
